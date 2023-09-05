@@ -1,10 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class FPS_Controller : MonoBehaviour
 {
+    [Header("Character Controller")]
     public CharacterController characterController;
+    public float originalHeight;
+    public Vector3 originalCenter;
+    public float slideHeightTransitionDuration = 0.3f; 
+    public float slideCenterTransitionDuration = 0.3f;
+
 
     private void Awake() 
     {
@@ -20,37 +27,48 @@ public class FPS_Controller : MonoBehaviour
         }
     }
 
-    [Header("Movement Settings")]
+    [Header("Movement Variables")]
     public float movementSpeed = 5f;
     public float rotationSpeed = 10f;
+
+    [Header("Sprinting Variablel")]
+    public float sprintingSpeed;
+    
+    [Header("Sliding Variables")]
+    public bool isSliding = false;
+    public float slideTimer = 0f;
+    public float slideDuration = 1.5f;
+    public float slideSpeed = 10f; 
+    
+    [Header("Jumping Variabes")]
     public float jumpSpeed = 5f;
+    [Range(0, 5)]public int extraJumps;
+    public int currentExtraJumps;
     public float gravity = 9.81f;
+
+    [Header("Crouching Variables")]
+    public bool isCrouching = false;
+    public float crouchHeight = 0.5f;
+    public float crouchCenter = 0.25f;
+    
+    [Header("General Variables")]
     private Vector3 moveDirection;
     private float verticalVelocity;
+    public bool isGrounded;
 
-    private bool isSliding = false;
-    private float slideTimer = 0f;
-    private float slideDuration = 1.5f; // Adjust this as needed
-    private float slideSpeed = 10f; // Adjust this as needed
-    private float originalHeight;
-    private Vector3 originalCenter;
-    private float slideHeightTransitionDuration = 0.3f; // Adjust this as needed
-    private float slideCenterTransitionDuration = 0.3f;
-    public bool isCrouching = false;
-    private float crouchHeight = 0.5f; // Adjust this as needed
-    private float crouchCenter = 0.25f; // Adjust this as needed
     
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
         originalHeight = characterController.height;
         originalCenter = characterController.center;
+        currentExtraJumps = extraJumps;
     }
 
     private void Update()
     {
         // Check for grounded state
-        bool isGrounded = characterController.isGrounded;
+        isGrounded = characterController.isGrounded;
 
         // Calculate movement direction based on input
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -63,19 +81,32 @@ public class FPS_Controller : MonoBehaviour
         if (isGrounded)
         {
             verticalVelocity = -gravity * Time.deltaTime;
-
+            currentExtraJumps = extraJumps;
             // Jumping
             if (Input.GetButtonDown("Jump"))
             {
-                verticalVelocity = jumpSpeed;
+                verticalVelocity = Jump();
             }
         }
         else
         {
-            verticalVelocity -= gravity * Time.deltaTime;
+            Debug.Log("Not Grounded");
+            if (Input.GetButtonDown("Jump"))
+            {
+                if(currentExtraJumps > 0)
+                {
+                    verticalVelocity = Jump();
+                    currentExtraJumps--;
+                }
+            }
+            else
+            {
+                verticalVelocity -= gravity * Time.deltaTime;
+            }
         }
 
         moveDirection.y = verticalVelocity;
+
 
         // Move the character controller
         characterController.Move(moveDirection * Time.deltaTime);
@@ -104,6 +135,13 @@ public class FPS_Controller : MonoBehaviour
         {
             EndSlide();
         }
+    }
+    private float Jump()
+    {
+        float val;
+        val = Mathf.Sqrt(jumpSpeed * -2.0f * -gravity);
+        Debug.Log(val);
+        return val;
     }
     private void StartSlide()
     {
