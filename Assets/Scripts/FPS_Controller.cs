@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -54,8 +55,11 @@ public class FPS_Controller : MonoBehaviour
     [Header("General Variables")]
     private Vector3 moveDirection;
     private float verticalVelocity;
-    public bool isGrounded;
 
+    [Header("Ground Conditions")]
+    public bool isGrounded;
+    public bool isSlantedSurface;
+    
     
     private void Start()
     {
@@ -63,6 +67,7 @@ public class FPS_Controller : MonoBehaviour
         originalHeight = characterController.height;
         originalCenter = characterController.center;
         currentExtraJumps = extraJumps;
+        LockMouse();
     }
 
     private void Update()
@@ -77,7 +82,6 @@ public class FPS_Controller : MonoBehaviour
         Vector3 rotatedDirection = transform.TransformDirection(inputDirection);
         moveDirection = rotatedDirection * movementSpeed;
 
-        // Apply gravity
         if (isGrounded)
         {
             verticalVelocity = -gravity * Time.deltaTime;
@@ -107,11 +111,8 @@ public class FPS_Controller : MonoBehaviour
 
         moveDirection.y = verticalVelocity;
 
-
-        // Move the character controller
         characterController.Move(moveDirection * Time.deltaTime);
 
-        // Rotate the player based on mouse movement
         float mouseX = Input.GetAxis("Mouse X") * rotationSpeed;
         Vector3 currentRotation = transform.localEulerAngles;
         transform.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y + mouseX, currentRotation.z);
@@ -124,23 +125,26 @@ public class FPS_Controller : MonoBehaviour
         {
             ToggleCrouch();
         }
-        // Continue sliding
         if (isSliding)
         {
             Slide();
         }
-
-        // Check for slide end input (e.g., release left shift key)
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             EndSlide();
         }
     }
+
+    public void LockMouse()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+
     private float Jump()
     {
         float val;
         val = Mathf.Sqrt(jumpSpeed * -2.0f * -gravity);
-        Debug.Log(val);
+        //Debug.Log(val);
         return val;
     }
     private void StartSlide()
@@ -163,8 +167,14 @@ public class FPS_Controller : MonoBehaviour
             // Apply forward force
             Vector3 slideDirection = transform.forward * slideSpeed;
             characterController.Move(slideDirection * Time.deltaTime);
-            slideTimer += Time.deltaTime;
+            if(!isSlantedSurface)
+                slideTimer += Time.deltaTime;
         }
+        // if(isSlantedSurface)
+        // {
+        //     Vector3 slideDirection = transform.forward * slideSpeed;
+        //     characterController.Move(slideDirection * Time.deltaTime);
+        // }
         else
         {
             EndSlide();
@@ -175,8 +185,8 @@ public class FPS_Controller : MonoBehaviour
     {
         if (isSliding)
         {
+            slideTimer = 0f;
             isSliding = false;
-
             // Gradually transition back to the original height and center
             StartCoroutine(SmoothHeightTransition(originalHeight, slideHeightTransitionDuration));
             StartCoroutine(SmoothCenterTransition(originalCenter, slideCenterTransitionDuration));
