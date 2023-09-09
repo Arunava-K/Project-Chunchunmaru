@@ -6,14 +6,17 @@ using UnityEngine.Rendering;
 
 public class FPS_Controller : MonoBehaviour
 {
+    [Header("Script Dependencies")]
+    public Player_Input player_Input;
+
+
     [Header("Character Controller")]
     public CharacterController characterController;
     public float originalHeight;
     public Vector3 originalCenter;
     public float slideHeightTransitionDuration = 0.3f; 
     public float slideCenterTransitionDuration = 0.3f;
-
-
+    
     private void Awake() 
     {
         if(gameObject.GetComponent<CharacterController>())
@@ -72,12 +75,11 @@ public class FPS_Controller : MonoBehaviour
 
     private void Update()
     {
-        // Check for grounded state
         isGrounded = characterController.isGrounded;
+        
+        float horizontalInput = player_Input.HorizontalAXIS();
+        float verticalInput = player_Input.VerticalAXIS();
 
-        // Calculate movement direction based on input
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
         Vector3 inputDirection = new Vector3(horizontalInput, 0f, verticalInput);
         Vector3 rotatedDirection = transform.TransformDirection(inputDirection);
         moveDirection = rotatedDirection * movementSpeed;
@@ -117,37 +119,22 @@ public class FPS_Controller : MonoBehaviour
         Vector3 currentRotation = transform.localEulerAngles;
         transform.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y + mouseX, currentRotation.z);
 
-        if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            StartSlide();
-        }
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            ToggleCrouch();
-        }
         if (isSliding)
-        {
             Slide();
-        }
-        if (Input.GetKeyUp(KeyCode.LeftShift))
-        {
-            EndSlide();
-        }
     }
 
     public void LockMouse()
     {
         Cursor.lockState = CursorLockMode.Locked;
     }
-
-    private float Jump()
+    public float Jump()
     {
         float val;
         val = Mathf.Sqrt(jumpSpeed * -2.0f * -gravity);
         //Debug.Log(val);
         return val;
     }
-    private void StartSlide()
+    public void StartSlide()
     {
         if (!isSliding)
         {
@@ -160,7 +147,7 @@ public class FPS_Controller : MonoBehaviour
         }
     }
 
-    private void Slide()
+    public void Slide()
     {
         if (slideTimer < slideDuration)
         {
@@ -181,7 +168,7 @@ public class FPS_Controller : MonoBehaviour
         }
     }
 
-    private void EndSlide()
+    public void EndSlide()
     {
         if (isSliding)
         {
@@ -192,7 +179,7 @@ public class FPS_Controller : MonoBehaviour
             StartCoroutine(SmoothCenterTransition(originalCenter, slideCenterTransitionDuration));
         }
     }
-    private void ToggleCrouch()
+    public void ToggleCrouch()
     {
         if (!isSliding)
         {

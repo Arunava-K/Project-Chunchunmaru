@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player_Input : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class Player_Input : MonoBehaviour
     //[SerializeField] private PlayerCombat playerCombat;
 
     [SerializeField] private Vector2 movementInput;
+    [SerializeField] private bool jumpState;
 
     private void OnEnable()
     {
@@ -37,6 +39,13 @@ public class Player_Input : MonoBehaviour
         inputActions.Locomotion.Movement.performed += i => movementInput = i.ReadValue<Vector2>();
         inputActions.Locomotion.Movement.canceled += i => movementInput = i.ReadValue<Vector2>();
 
+        inputActions.Locomotion.Slide.performed += s => playerController.StartSlide();
+        inputActions.Locomotion.Slide.canceled += s => playerController.EndSlide();
+
+        inputActions.Locomotion.Jump.performed += j => jumpState = true;
+        inputActions.Locomotion.Jump.canceled += j => jumpState = false;
+
+        inputActions.Locomotion.Crouch.performed += j => playerController.ToggleCrouch();
         //playerInputs.Movement.Dash.performed += d => playerLocomotion.HandleDash();
         //playerInputs.Actions.TargetLockOnSwitch.performed += t_l => targetLockOn.LockTarget();
         //playerInputs.Combat.WeaponSwitch.performed += w_s => weaponSwitching.ChangeWeapon();
@@ -46,7 +55,10 @@ public class Player_Input : MonoBehaviour
     {
         inputActions.Disable();    
     }
-
+    public bool JumpState()
+    {
+        return jumpState;
+    }
     public float VerticalAXIS()
     {
         return movementInput.y;
